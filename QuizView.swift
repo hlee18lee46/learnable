@@ -13,7 +13,7 @@ struct QuizView: View {
     @State private var questions: [QuizQuestion] = []
     @State private var selectedCategory: String = "math"
     @State private var isLoading = true
-
+    @AppStorage("userCoins") private var userCoins: Int = 0
     let userEmail: String // Pass this from login or context
 
     var body: some View {
@@ -36,9 +36,16 @@ struct QuizView: View {
             } else {
                 ScrollView{
                     VStack {
-                        Text("Score: \(score)")
-                            .font(.title)
-                            .padding()
+                        HStack{
+                            Image(systemName: "bitcoinsign.circle.fill") // Replace with your coin image if you have one
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 20, height: 20)
+                                .foregroundColor(.yellow) // Change the color if using a system image
+                            Text("Coins: \(userCoins)")
+                                .font(.headline)
+                                .padding()
+                        }
 
                         if !questions.isEmpty {
                             // Display current question
@@ -135,7 +142,11 @@ struct QuizView: View {
         let isCorrect = selectedOption == correctAnswer
 
         feedbackMessage = isCorrect ? "Correct!" : "Incorrect. Try Again."
-        if isCorrect { score += 1 }
+        if isCorrect {
+            feedbackMessage = "Correct!"
+            score += 1
+            userCoins += 10 // Reward 10 coins for a correct answer
+        }
 
         storeAnswer(isCorrect: isCorrect)
 
