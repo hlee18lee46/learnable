@@ -13,6 +13,7 @@ struct QuizView: View {
     @State private var questions: [QuizQuestion] = []
     @State private var selectedCategory: String = "math"
     @State private var isLoading = true
+    @AppStorage("userCoins") private var userCoins: Int = 0 // Persist user coins
 
     let userEmail: String // Pass this from login or context
 
@@ -36,10 +37,9 @@ struct QuizView: View {
             } else {
                 ScrollView{
                     VStack {
-                        Text("Score: \(score)")
-                            .font(.title)
+                        Text("Coins: \(userCoins)")
+                            .font(.headline)
                             .padding()
-
                         if !questions.isEmpty {
                             // Display current question
                             Text(questions[currentQuestionIndex].question)
@@ -135,7 +135,11 @@ struct QuizView: View {
         let isCorrect = selectedOption == correctAnswer
 
         feedbackMessage = isCorrect ? "Correct!" : "Incorrect. Try Again."
-        if isCorrect { score += 1 }
+        if isCorrect {
+            score += 1
+            userCoins += 10 // Add coins locally
+            updateCoinsInSupabase(newCoins: userCoins) // Update in Supabase
+        }
 
         storeAnswer(isCorrect: isCorrect)
 
@@ -146,7 +150,28 @@ struct QuizView: View {
             currentQuestionIndex = (currentQuestionIndex + 1) % questions.count
         }
     }
+    func updateCoinsInSupabase(newCoins: Int) {
+        let supabase = SupabaseManager.shared.supabaseClient
 
+        Task {
+            do {
+                // Increment the user's coins in Supabase
+                let updateResponse = try await supabase
+                    .from("users")
+                    .update(["coins": newCoins])
+                    .eq("email", value: userEmail)
+                    .execute()
+
+                if updateResponse.status == 200 {
+                    print("Coins updated successfully in Supabase")
+                } else {
+                    print("Error updating coins: \(updateResponse)")
+                }
+            } catch {
+                print("Error updating coins: \(error.localizedDescription)")
+            }
+        }
+    }
     func storeAnswer(isCorrect: Bool) {
         let supabase = SupabaseManager.shared.supabaseClient
         let questionId = questions[currentQuestionIndex].id

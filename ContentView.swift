@@ -8,10 +8,22 @@ struct ContentView: View {
     @State private var logoScale: CGFloat = 0.5  // Initial scale for animation
     @State private var logoOpacity: Double = 0.0  // Initial opacity for animation
     @State private var userEmail: String = "" // Add a property to store the user email
+    @AppStorage("userCoins") private var userCoins: Int = 0 // Persist user coins
 
     var body: some View {
         if isSignedIn {
-            HomeView(userEmail: userEmail) // Pass userEmail to HomeView
+            HomeView(userEmail: userEmail)
+                .onAppear {
+                    SupabaseManager.shared.fetchCoins(for: userEmail) { coins in
+                        if let coins = coins {
+                            DispatchQueue.main.async {
+                                self.userCoins = coins
+                            }
+                        } else {
+                            print("Failed to fetch coins")
+                        }
+                    }
+                }
         } else {
             ZStack{
                 Color.blue.ignoresSafeArea()

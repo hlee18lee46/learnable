@@ -7,7 +7,7 @@ struct HomeView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            DashboardView()
+            DashboardView(userEmail: userEmail)
                 .tabItem {
                     Image(systemName: "house.fill")
                     Text("Dashboard")
@@ -46,16 +46,7 @@ enum Tab {
     case dashboard, quiz, collab, battle
 }
 
-// Individual Views for Tabs
-struct DashboardView: View {
-    var body: some View {
-        VStack {
-            Text("Welcome to Dashboard!")
-                .font(.largeTitle)
-                .padding()
-        }
-    }
-}
+
 
 struct CollabView: View {
     var body: some View {
