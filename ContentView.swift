@@ -8,6 +8,7 @@ struct ContentView: View {
     @State private var logoScale: CGFloat = 0.5  // Initial scale for animation
     @State private var logoOpacity: Double = 0.0  // Initial opacity for animation
     @State private var userEmail: String = "" // Add a property to store the user email
+    @State private var scale: CGFloat = 1.0
 
     var body: some View {
         if isSignedIn {
@@ -17,9 +18,41 @@ struct ContentView: View {
                 Color.blue.ignoresSafeArea()
                 
                 VStack {
-                    Text("Learn-Able! Math = Fun!")
-                        .font(.system(size: 28, weight: .bold))
+                    Text("Learn-Able!")
+                        .font(.custom("Chalkboard SE", size: 24)) // Use "Chalkboard SE" for a fun, playful style
+                        .foregroundColor(.green) // Add a fun color
+                        .shadow(color: .green, radius: 2, x: 0, y: 2) // Add a subtle shadow for depth
+                        .scaleEffect(scale)
+                        .onAppear {
+                            withAnimation(Animation.easeInOut(duration: 1).repeatForever(autoreverses: true)) {
+                                scale = 1.2
+                            }
+                        }
                         .padding(.bottom, 20)
+                    // Math + Science = Fun with icons
+                    HStack {
+                        Image(systemName: "function") // Math icon
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 50, height: 50)
+                        Text("+")
+                            .font(.title)
+                            .fontWeight(.bold)
+                        Image(systemName: "atom") // Science icon
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 50, height: 50)
+                        Text("=")
+                            .font(.title)
+                            .fontWeight(.bold)
+                        Image(systemName: "sparkles") // Fun icon
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 50, height: 50)
+                    }
+                    .padding()
+                    Text("Math + Science = Fun!")
+                        .font(.system(size: 12, weight: .bold))
                     Image(uiImage: UIImage(named: "logo.png")!)
                         .resizable()
                         .scaledToFit()

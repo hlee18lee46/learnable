@@ -22,9 +22,13 @@ struct DashboardView: View {
                     .font(.title)
                     .fontWeight(.bold)
             }
-            .padding()
 
-            Spacer()
+            // Display the character image (basic.png)
+            Image(uiImage: UIImage(named: "basic.png")!)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 150, height: 150)
+                .padding()
         }
         .padding()
     }
