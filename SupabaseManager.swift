@@ -8,10 +8,18 @@ import GoogleSignIn
 class SupabaseManager {
     static let shared = SupabaseManager()
 
-    let supabaseClient = SupabaseClient(
-        supabaseURL: URL(string: "https://uvpgvfprspgfctmezlza.supabase.co")!,
-        supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV2cGd2ZnByc3BnZmN0bWV6bHphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzAwNzE4NzQsImV4cCI6MjA0NTY0Nzg3NH0.WNgFYJAWjpgKgtSgkeLlZkgN5Y7Bok6VZOvYspIYMQA"
-    )
+    let supabaseClient: SupabaseClient
+
+    private init() {
+        let supabaseURL = URL(string: "https://uvpgvfprspgfctmezlza.supabase.co")!
+        let supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV2cGd2ZnByc3BnZmN0bWV6bHphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzAwNzE4NzQsImV4cCI6MjA0NTY0Nzg3NH0.WNgFYJAWjpgKgtSgkeLlZkgN5Y7Bok6VZOvYspIYMQA"
+
+        self.supabaseClient = SupabaseClient(supabaseURL: supabaseURL, supabaseKey: supabaseKey)
+
+        print("SupabaseClient initialized with URL: \(supabaseURL) and API key: \(supabaseKey.prefix(10))...") // Partial key for debugging
+    }
+    
+
 }
 
 // Function to handle Google Sign-In
@@ -44,29 +52,30 @@ func saveEmailToSupabase(email: String) async {
     let supabase = SupabaseManager.shared.supabaseClient
 
     do {
-        // Update to use "users" (plural)
+        // Check if the user already exists
         let existingUserResponse = try await supabase
-            .from("user") // Corrected table name
+            .from("users")
             .select("*")
             .eq("email", value: email)
             .execute()
 
-        if let existingUsers = try? JSONDecoder().decode([User].self, from: existingUserResponse.data),
-           !existingUsers.isEmpty {
-            print("User already exists with email: \(email)")
-            return
+        let existingUsers = try JSONDecoder().decode([User].self, from: existingUserResponse.data)
+
+        if !existingUsers.isEmpty {
+            print("User already exists: \(email)")
+            return // Exit early if the user exists
         }
 
-        // Insert the new user record into the "users" table
-        let user = ["email": email]
+        // Insert new user
+        let newUser = ["email": email]
         let insertResponse = try await supabase
-            .from("user") // Corrected table name
-            .insert([user])
+            .from("users")
+            .insert([newUser])
             .execute()
 
-        print("Email saved to Supabase: \(insertResponse)")
+        print("User successfully added: \(insertResponse)")
     } catch {
-        print("Error saving email to Supabase: \(error.localizedDescription)")
+        print("Error inserting user: \(error.localizedDescription)")
     }
 }
 

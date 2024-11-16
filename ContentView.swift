@@ -5,27 +5,47 @@ import GoogleSignInSwift
 struct ContentView: View {
     @State private var isSignedIn = false
     @State private var errorMessage: String? = nil
+    @State private var logoScale: CGFloat = 0.5  // Initial scale for animation
+    @State private var logoOpacity: Double = 0.0  // Initial opacity for animation
+    @State private var userEmail: String = "" // Add a property to store the user email
 
     var body: some View {
         if isSignedIn {
-            HomeView()
+            HomeView(userEmail: userEmail) // Pass userEmail to HomeView
         } else {
-            VStack {
-                Text("Learn-Able! Gamification")
-                    .font(.system(size: 28, weight: .bold))
-                    .padding(.bottom, 20)
-
-                if let errorMessage = errorMessage {
-                    Text(errorMessage)
-                        .foregroundColor(.red)
+            ZStack{
+                Color.blue.ignoresSafeArea()
+                
+                VStack {
+                    Text("Learn-Able! Math = Fun!")
+                        .font(.system(size: 28, weight: .bold))
                         .padding(.bottom, 20)
-                }
+                    Image(uiImage: UIImage(named: "logo.png")!)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 100, height: 100)
+                        .scaleEffect(logoScale)
+                        .opacity(logoOpacity)
+                        .onAppear {
+                            withAnimation(.easeOut(duration: 1.5)) {
+                                logoScale = 1.8  // Scale up to original size
+                                logoOpacity = 1.0  // Fade in to full opacity
+                            }
+                        }
+                        .padding(.top, 40)
+                    if let errorMessage = errorMessage {
+                        Text(errorMessage)
+                            .foregroundColor(.red)
+                            .padding(.bottom, 20)
+                    }
 
-                GoogleSignInButton(action: signInWithGoogle)
-                    .frame(width: 200, height: 50)
-                    .padding()
+                    GoogleSignInButton(action: signInWithGoogle)
+                        .frame(width: 200, height: 50)
+                        .padding()
+                }
             }
-            .background(Color.white.ignoresSafeArea())
+            
+
         }
     }
 
