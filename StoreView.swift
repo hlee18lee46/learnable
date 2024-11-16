@@ -15,7 +15,7 @@ struct StoreView: View {
                 .font(.headline)
                 .padding()
 
-            List(characters) { character in
+            List(characters, id: \.id) { character in
                 HStack {
                     Text(character.name)
                         .font(.title2)

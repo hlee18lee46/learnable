@@ -48,21 +48,23 @@ class SupabaseManager {
 
         Task {
             do {
-                let response = try await supabase
+                // Use the correct type for response
+                let response: PostgrestResponse<Void> = try await supabase
                     .from("user_characters")
                     .insert(["user_email": userEmail, "character_id": 1]) // Default character ID
                     .execute()
 
+                // Check for success
                 if response.status == 201 {
                     print("Default character assigned successfully.")
                 } else {
-                    print("Error assigning default character: \(response)")
+                    print("Error assigning default character. Response status: \(response.status)")
                 }
             } catch {
                 print("Error assigning default character: \(error.localizedDescription)")
             }
         }
-    }
+    }    }
     
     func purchaseCharacter(userEmail: String, characterId: Int, characterPrice: Int) {
         let supabase = SupabaseManager.shared.supabaseClient
@@ -102,22 +104,23 @@ class SupabaseManager {
         }
     }
     
+    
     func fetchUserCharacters(userEmail: String, completion: @escaping ([Character]) -> Void) {
+        let supabase = SupabaseManager.shared.supabaseClient
+
         Task {
             do {
-                let response = try await supabaseClient
+                let response = try await supabase
                     .from("user_characters")
-                    .select("character:characters(*)") // Ensure correct nesting
+                    .select("characters(id, name, image, price)")
                     .eq("user_email", value: userEmail)
                     .execute()
 
                 if let data = response.data {
-                    // Decode the nested structure
-                    let userCharacters: [UserCharacter] = try JSONDecoder().decode([UserCharacter].self, from: data)
-                    let characters = userCharacters.map { $0.character }
-                    completion(characters)
+                    let userCharacters: [Character] = try JSONDecoder().decode([Character].self, from: data)
+                    completion(userCharacters)
                 } else {
-                    print("No user characters found.")
+                    print("No characters found.")
                     completion([])
                 }
             } catch {
@@ -126,7 +129,7 @@ class SupabaseManager {
             }
         }
     }
-    
+        
     func fetchCharacters(completion: @escaping ([Character]) -> Void) {
         Task {
             do {
@@ -135,16 +138,10 @@ class SupabaseManager {
                     .select("*")
                     .execute()
 
-                if let data = response.data {
-                    // Explicitly specify the type
-                    let characters: [Character] = try JSONDecoder().decode([Character].self, from: data)
-                    completion(characters)
-                } else {
-                    print("No data received from Supabase.")
-                    completion([])
-                }
+                let characters = try JSONDecoder().decode([Character].self, from: response.data) // This causes ambiguity
+                completion(characters)
             } catch {
-                print("Error fetching characters: \(error.localizedDescription)")
+                print("Error: \(error)")
                 completion([])
             }
         }

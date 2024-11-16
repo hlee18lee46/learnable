@@ -7,8 +7,8 @@
 
 
 struct Character: Codable, Identifiable {
-    let id: Int
-    let name: String
-    let image: String
-    let price: Int
+    var id: Int
+    var name: String
+    var image: String
+    var price: Int
 }
