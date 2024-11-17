@@ -19,7 +19,15 @@ class SupabaseManager {
         print("SupabaseClient initialized with URL: \(supabaseURL) and API key: \(supabaseKey.prefix(10))...") // Partial key for debugging
     }
     
+    func fetchCharacters() async throws -> [MarketItem] {
+        let response = try await supabaseClient
+            .from("character")
+            .select("*")
+            .execute()
 
+        let items = try JSONDecoder().decode([MarketItem].self, from: response.data)
+        return items
+    }
 }
 
 // Function to handle Google Sign-In

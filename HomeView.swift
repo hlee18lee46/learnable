@@ -34,6 +34,12 @@ struct HomeView: View {
                     Text("Battle")
                 }
                 .tag(Tab.battle)
+            MarketView(userEmail: userEmail) // Pass userEmail to MarketView
+                .tabItem {
+                    Image(systemName: "cart.fill")
+                    Text("Market")
+                }
+                .tag(Tab.market)
         }
         .onAppear {
             print("HomeView Loaded")
@@ -43,7 +49,7 @@ struct HomeView: View {
 
 // Enum for Tabs
 enum Tab {
-    case dashboard, quiz, collab, battle
+    case dashboard, quiz, collab, battle, market
 }
 
 struct CollabView: View {
