@@ -62,15 +62,6 @@ struct CollabView: View {
     }
 }
 
-struct BattleView: View {
-    var body: some View {
-        VStack {
-            Text("Battle Mode!")
-                .font(.largeTitle)
-                .padding()
-        }
-    }
-}
 
 // Preview
 struct HomeView_Previews: PreviewProvider {
