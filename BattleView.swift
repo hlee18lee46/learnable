@@ -2,7 +2,7 @@ import SwiftUI
 
 struct BattleView: View {
     @StateObject private var viewModel: BattleViewModel
-    @State private var selectedCategory: String = "math"
+    @State private var selectedCategory: String = "math" // Default category is math
 
     init(userEmail: String) {
         _viewModel = StateObject(wrappedValue: BattleViewModel(userEmail: userEmail))
@@ -29,21 +29,47 @@ struct BattleView: View {
                 }
             } else if viewModel.connectedPeers.isEmpty {
                 VStack {
-                    Button("Start Hosting") {
-                        viewModel.startHosting(category: selectedCategory)
-                    }
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
+                    Text("Select a Category to Start or Join a Battle")
+                        .font(.headline)
+                        .padding()
+                    HStack{
+                        // Buttons for Math category
+                        Button("Start Hosting (Math)") {
+                            viewModel.startHosting(category: "math")
+                        }
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
 
-                    Button("Join Session") {
-                        viewModel.joinSession()
+                        Button("Join Session (Math)") {
+                            viewModel.joinSession(category: "math")
+                        }
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
                     }
-                    .padding()
-                    .background(Color.green)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
+                    HStack{
+                        Button("Start Hosting (Science)") {
+                            viewModel.startHosting(category: "science")
+                        }
+                        .padding()
+                        .background(Color.red)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+
+                        Button("Join Session (Science)") {
+                            viewModel.joinSession(category: "science")
+                        }
+                        .padding()
+                        .background(Color.red)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                    }
+
+
+
                 }
             } else {
                 VStack {

@@ -38,12 +38,15 @@ class BattleViewModel: ObservableObject {
 
     func startHosting(category: String) {
         multipeerManager.startHosting()
-        loadQuestions(for: category)
+        loadQuestions(for: category) // Load questions for the selected category
     }
 
-    func joinSession() {
+    func joinSession(category: String) {
         multipeerManager.joinSession()
+        loadQuestions(for: category) // Load questions for the selected category
     }
+
+
 
     func stopSession() {
         multipeerManager.stopSession()
@@ -51,21 +54,22 @@ class BattleViewModel: ObservableObject {
 
     func loadQuestions(for category: String) {
         isLoading = true
+        currentQuestionIndex = 0 // Ensure the question index starts from 0
+        questions = [] // Clear any previously loaded questions
 
         Task {
             do {
                 let response = try await supabase
                     .from("questions")
                     .select("*")
-                    .eq("category", value: category)
+                    .eq("category", value: category) // Filter by selected category
                     .execute()
 
                 let fetchedQuestions = try JSONDecoder().decode([QuizQuestion].self, from: response.data)
                 DispatchQueue.main.async {
                     self.questions = fetchedQuestions
-                    self.currentQuestionIndex = 0
                     self.isLoading = false
-                    self.sendNextQuestion()
+                    self.sendNextQuestion() // Start the session with the first question
                 }
             } catch {
                 print("Error loading questions: \(error.localizedDescription)")
@@ -76,6 +80,8 @@ class BattleViewModel: ObservableObject {
             }
         }
     }
+
+
 
     func submitAnswer(_ answer: String) {
         guard !sessionEnded, currentQuestionIndex < questions.count else { return }
