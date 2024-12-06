@@ -2,17 +2,14 @@ import SwiftUI
 
 struct BattleView: View {
     @StateObject private var viewModel = BattleViewModel()
+    @State private var selectedCategory: String = "math"
 
     var body: some View {
         VStack {
             if viewModel.connectedPeers.isEmpty {
                 VStack {
-                    Text("Waiting for a connection...")
-                        .font(.title)
-                        .padding()
-
                     Button("Start Hosting") {
-                        viewModel.startHosting()
+                        viewModel.startHosting(category: selectedCategory)
                     }
                     .padding()
                     .background(Color.blue)
@@ -29,11 +26,11 @@ struct BattleView: View {
                 }
             } else {
                 VStack {
-                    Text("Connected to: \(viewModel.connectedPeers.first ?? "Unknown")")
-                        .font(.headline)
-                        .padding()
-
-                    if let question = viewModel.currentQuestion {
+                    if viewModel.isLoading {
+                        Text("Loading Questions...")
+                            .font(.title)
+                            .padding()
+                    } else if let question = viewModel.currentQuestion {
                         Text(question)
                             .font(.headline)
                             .padding()
@@ -45,36 +42,28 @@ struct BattleView: View {
                             }) {
                                 Text(option)
                                     .padding()
-                                    .frame(maxWidth: .infinity)
                                     .background(Color.blue.opacity(0.2))
-                                    .foregroundColor(.blue)
                                     .cornerRadius(8)
                             }
                             .padding(.horizontal)
                         }
+
+                        Text("Your Score: \(viewModel.playerScore)")
+                            .font(.headline)
+                            .padding()
+
+                        Text("Opponent Score: \(viewModel.opponentScore)")
+                            .font(.headline)
+                    } else {
+                        Text("No questions available.")
+                            .font(.title2)
+                            .padding()
                     }
-
-                    Text("Your Score: \(viewModel.playerScore)")
-                        .font(.subheadline)
-                        .padding()
-
-                    Text("Opponent's Score: \(viewModel.opponentScore)")
-                        .font(.subheadline)
-                        .padding()
                 }
             }
         }
         .onAppear {
-            viewModel.loadDummyQuestion()
-        }
-        .alert(isPresented: $viewModel.showGameOverAlert) {
-            Alert(
-                title: Text("Game Over"),
-                message: Text(viewModel.gameOverMessage),
-                dismissButton: .default(Text("OK"), action: {
-                    viewModel.resetGame()
-                })
-            )
+            viewModel.loadQuestions(for: selectedCategory)
         }
     }
 }

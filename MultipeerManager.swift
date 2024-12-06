@@ -1,53 +1,54 @@
-//
-//  MultipeerManager.swift
-//  learnable
-//
-//  Created by Han Lee on 12/5/24.
-//
-
-
-import Foundation
 import MultipeerConnectivity
 
 class MultipeerManager: NSObject, ObservableObject, MCSessionDelegate, MCNearbyServiceAdvertiserDelegate, MCNearbyServiceBrowserDelegate {
     @Published var connectedPeers: [MCPeerID] = []
-    @Published var receivedData: String = ""
+    @Published var receivedData: Data = Data()
 
-    private let peerID = MCPeerID(displayName: UIDevice.current.name)
-    private let serviceType = "quiz-battle"
-    private var session: MCSession
-    private var advertiser: MCNearbyServiceAdvertiser
-    private var browser: MCNearbyServiceBrowser
+    private var peerID: MCPeerID!
+    private var session: MCSession!
+    private var advertiser: MCNearbyServiceAdvertiser!
+    private var browser: MCNearbyServiceBrowser!
 
     override init() {
-        self.session = MCSession(peer: peerID, securityIdentity: nil, encryptionPreference: .required)
-        self.advertiser = MCNearbyServiceAdvertiser(peer: peerID, discoveryInfo: nil, serviceType: serviceType)
-        self.browser = MCNearbyServiceBrowser(peer: peerID, serviceType: serviceType)
         super.init()
+        // Initialize peer ID and session
+        peerID = MCPeerID(displayName: UIDevice.current.name)
+        session = MCSession(peer: peerID, securityIdentity: nil, encryptionPreference: .required)
+        session.delegate = self
 
-        self.session.delegate = self
-        self.advertiser.delegate = self
-        self.browser.delegate = self
+        // Initialize advertiser and browser
+        advertiser = MCNearbyServiceAdvertiser(peer: peerID, discoveryInfo: nil, serviceType: "quiz-battle")
+        advertiser.delegate = self
+
+        browser = MCNearbyServiceBrowser(peer: peerID, serviceType: "quiz-battle")
+        browser.delegate = self
     }
 
+    // Start hosting a session
     func startHosting() {
         advertiser.startAdvertisingPeer()
     }
 
+    // Stop hosting
+    func stopHosting() {
+        advertiser.stopAdvertisingPeer()
+    }
+
+    // Join an existing session
     func joinSession() {
         browser.startBrowsingForPeers()
     }
 
+    // Stop browsing for sessions
     func stopSession() {
-        advertiser.stopAdvertisingPeer()
         browser.stopBrowsingForPeers()
     }
 
-    func send(data: String) {
-        guard !session.connectedPeers.isEmpty, let dataToSend = data.data(using: .utf8) else { return }
-
+    // Send data to connected peers
+    func send(data: Data) {
+        guard !session.connectedPeers.isEmpty else { return }
         do {
-            try session.send(dataToSend, toPeers: session.connectedPeers, with: .reliable)
+            try session.send(data, toPeers: session.connectedPeers, with: .reliable)
         } catch {
             print("Error sending data: \(error.localizedDescription)")
         }
@@ -61,20 +62,18 @@ class MultipeerManager: NSObject, ObservableObject, MCSessionDelegate, MCNearbyS
     }
 
     func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
-        if let message = String(data: data, encoding: .utf8) {
-            DispatchQueue.main.async {
-                self.receivedData = message
-            }
+        DispatchQueue.main.async {
+            self.receivedData = data
         }
     }
 
-    func session(_ session: MCSession, didReceive stream: InputStream, withName streamName: String, fromPeer peerID: MCPeerID) {}
-    func session(_ session: MCSession, didStartReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, with progress: Progress) {}
-    func session(_ session: MCSession, didFinishReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, at localURL: URL?, withError error: Error?) {}
+    func session(_: MCSession, didReceive _: InputStream, withName _: String, fromPeer _: MCPeerID) {}
+    func session(_: MCSession, didStartReceivingResourceWithName _: String, fromPeer _: MCPeerID, with _: Progress) {}
+    func session(_: MCSession, didFinishReceivingResourceWithName _: String, fromPeer _: MCPeerID, at _: URL?, withError _: Error?) {}
 
     // MARK: - MCNearbyServiceAdvertiserDelegate
     func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
-        invitationHandler(true, session)
+        invitationHandler(true, session) // Automatically accept invitations
     }
 
     // MARK: - MCNearbyServiceBrowserDelegate
