@@ -8,17 +8,23 @@ class BattleViewModel: ObservableObject {
     @Published var answerOptions: [String] = []
     @Published var playerScore: Int = 0
     @Published var opponentScore: Int = 0
-    @Published var connectedPeers: [String] = [] // List of peer display names
+    @Published var connectedPeers: [String] = []
     @Published var isLoading = true
+    @Published var sessionEnded = false
+    @Published var winner: Bool? // `true` if player wins, `false` if player loses
+    @AppStorage("userCoins") private var userCoins: Int = 0 // Coins stored locally
 
     private var multipeerManager = MultipeerManager()
-    private var supabase = SupabaseManager.shared.supabaseClient // Supabase client instance
+    private var supabase = SupabaseManager.shared.supabaseClient
     private var questions: [QuizQuestion] = []
     private var currentQuestionIndex = 0
     private var cancellables = Set<AnyCancellable>()
+    private let userEmail: String // User email passed during initialization
 
-    init() {
-        // Transform MCPeerID objects into their display names
+    // Initialize with user email
+    init(userEmail: String) {
+        self.userEmail = userEmail
+
         multipeerManager.$connectedPeers
             .map { $0.map { $0.displayName } }
             .assign(to: &$connectedPeers)
@@ -43,7 +49,6 @@ class BattleViewModel: ObservableObject {
         multipeerManager.stopSession()
     }
 
-    // Fetch questions from Supabase
     func loadQuestions(for category: String) {
         isLoading = true
 
@@ -72,14 +77,63 @@ class BattleViewModel: ObservableObject {
         }
     }
 
-    // Send the next question to all peers
+    func submitAnswer(_ answer: String) {
+        guard !sessionEnded, currentQuestionIndex < questions.count else { return }
+        let question = questions[currentQuestionIndex]
+        let isCorrect = answer == question.correctAnswer
+
+        if isCorrect {
+            playerScore += 1
+        }
+
+        let data: [String: Any] = [
+            "action": "updateScore",
+            "playerScore": playerScore
+        ]
+        sendDataToPeers(data)
+
+        if playerScore == 10 {
+            endSession(winner: true)
+        } else if opponentScore == 10 {
+            endSession(winner: false)
+        } else {
+            currentQuestionIndex += 1
+            sendNextQuestion()
+        }
+    }
+
+    private func endSession(winner: Bool) {
+        sessionEnded = true
+        self.winner = winner
+
+        // Update coins locally
+        let coinChange = winner ? 50 : -20
+        userCoins = max(userCoins + coinChange, 0)
+
+        Task {
+            do {
+                try await updateCoinsInSupabase(coinChange: coinChange)
+                print("Coins updated successfully in Supabase.")
+            } catch {
+                print("Error updating coins in Supabase: \(error.localizedDescription)")
+            }
+        }
+
+        let data: [String: Any] = [
+            "action": "endSession",
+            "winner": winner,
+            "playerScore": playerScore,
+            "opponentScore": opponentScore
+        ]
+        sendDataToPeers(data)
+    }
+
     private func sendNextQuestion() {
         guard currentQuestionIndex < questions.count else { return }
         let question = questions[currentQuestionIndex]
         currentQuestion = question.question
         answerOptions = [question.option1, question.option2, question.option3, question.option4].shuffled()
 
-        // Send question and options to peers
         let data: [String: Any] = [
             "action": "nextQuestion",
             "question": question.question,
@@ -88,41 +142,26 @@ class BattleViewModel: ObservableObject {
         sendDataToPeers(data)
     }
 
-    // Submit an answer
-    func submitAnswer(_ answer: String) {
-        guard currentQuestionIndex < questions.count else { return }
-        let question = questions[currentQuestionIndex]
-        let isCorrect = answer == question.correctAnswer
+    private func updateCoinsInSupabase(coinChange: Int) async throws {
+        let updateResponse = try await supabase
+            .from("users")
+            .update(["coins": userCoins])
+            .eq("email", value: userEmail)
+            .execute()
 
-        if isCorrect {
-            playerScore += 1
-        }
-
-        // Send updated score to peers
-        let data: [String: Any] = [
-            "action": "updateScore",
-            "score": playerScore
-        ]
-        sendDataToPeers(data)
-
-        // Proceed to the next question
-        currentQuestionIndex += 1
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            self.sendNextQuestion()
-        }
+        print("Coins updated in Supabase: \(updateResponse)")
     }
 
-    // Send data to connected peers
     private func sendDataToPeers(_ data: [String: Any]) {
         do {
             let jsonData = try JSONSerialization.data(withJSONObject: data, options: [])
-            multipeerManager.send(data: jsonData) // Ensure this is Data
+            multipeerManager.send(data: jsonData)
+            print("Sent data to peers: \(data)")
         } catch {
             print("Error sending data to peers: \(error.localizedDescription)")
         }
     }
 
-    // Handle received data from peers
     private func handleReceivedData(_ data: Data) {
         do {
             if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
@@ -133,9 +172,13 @@ class BattleViewModel: ObservableObject {
                         self.currentQuestion = json["question"] as? String
                         self.answerOptions = json["options"] as? [String] ?? []
                     case "updateScore":
-                        if let score = json["score"] as? Int {
-                            self.opponentScore = score
+                        self.opponentScore = json["playerScore"] as? Int ?? 0
+                        if self.opponentScore == 10 {
+                            self.endSession(winner: false)
                         }
+                    case "endSession":
+                        self.sessionEnded = true
+                        self.winner = json["winner"] as? Bool
                     default:
                         break
                     }

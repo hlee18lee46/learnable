@@ -1,12 +1,33 @@
 import SwiftUI
 
 struct BattleView: View {
-    @StateObject private var viewModel = BattleViewModel()
+    @StateObject private var viewModel: BattleViewModel
     @State private var selectedCategory: String = "math"
+
+    init(userEmail: String) {
+        _viewModel = StateObject(wrappedValue: BattleViewModel(userEmail: userEmail))
+    }
 
     var body: some View {
         VStack {
-            if viewModel.connectedPeers.isEmpty {
+            if viewModel.sessionEnded {
+                VStack {
+                    if viewModel.winner == true {
+                        Text("You Lose!")
+                            .font(.largeTitle)
+                            .padding()
+                        Text("You lost 20 coins.")
+                    } else {
+                        Text("You Win!")
+                            .font(.largeTitle)
+                            .padding()
+                        Text("You earned 50 coins!")
+
+                    }
+                    Text("Your Score: \(viewModel.playerScore)")
+                    Text("Opponent's Score: \(viewModel.opponentScore)")
+                }
+            } else if viewModel.connectedPeers.isEmpty {
                 VStack {
                     Button("Start Hosting") {
                         viewModel.startHosting(category: selectedCategory)

@@ -28,7 +28,7 @@ struct HomeView: View {
                 }
                 .tag(Tab.collab)
 
-            BattleView()
+            BattleView(userEmail: userEmail)
                 .tabItem {
                     Image(systemName: "flame.fill")
                     Text("Battle")
