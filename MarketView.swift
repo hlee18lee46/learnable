@@ -122,7 +122,6 @@ struct MarketView: View {
         
         return try JSONDecoder().decode([MarketItem].self, from: response.data)
     }
-    
     private func purchaseItem(_ item: MarketItem) {
         guard let coins = userCoins, coins >= item.price else {
             purchaseMessage = "Not enough coins"
@@ -133,14 +132,19 @@ struct MarketView: View {
             do {
                 let newCoins = coins - item.price
                 
-                // Update user's coins
+                // Update both coins and character_id in users table
+                let updates: [String: AnyEncodable] = [
+                    "coin": AnyEncodable(newCoins),
+                    "character_id": AnyEncodable(item.id)
+                ]
+                
                 try await SupabaseManager.shared.supabaseClient
                     .from("users")
-                    .update(["coin": newCoins])
+                    .update(updates)
                     .eq("email", value: userEmail)
                     .execute()
                 
-                // Add character to user's collection
+                // Add character to user_characters table for history
                 let purchase = UserCharacter(user_email: userEmail, character_id: item.id)
                 try await SupabaseManager.shared.supabaseClient
                     .from("user_characters")
@@ -156,6 +160,10 @@ struct MarketView: View {
                         self.purchaseMessage = ""
                     }
                 }
+                
+                // Refresh user data after purchase
+                _ = try await fetchUserCoins()
+                
             } catch {
                 DispatchQueue.main.async {
                     self.purchaseMessage = "Purchase failed"
@@ -164,6 +172,7 @@ struct MarketView: View {
             }
         }
     }
+
 }
 
 // MARK: - Supporting Types
@@ -187,7 +196,7 @@ struct MarketItemView: View {
     
     var body: some View {
         HStack {
-            Image(item.image)
+            Image(uiImage: UIImage(named: item.image)!)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 50, height: 50)
