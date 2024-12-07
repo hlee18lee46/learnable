@@ -14,7 +14,7 @@ struct HomeView: View {
                 }
                 .tag(Tab.dashboard)
 
-            QuizView(userEmail: userEmail) // Pass userEmail to QuizView
+            QuizView(userEmail: userEmail)
                 .tabItem {
                     Image(systemName: "questionmark.circle.fill")
                     Text("Quiz")

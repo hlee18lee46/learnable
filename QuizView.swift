@@ -260,9 +260,3 @@ struct QuizQuestion: Codable, Identifiable {
     }
 }
 
-// MARK: - UserDetails Model
-struct UserDetails: Codable {
-    let coin: Int
-    let character_id: Int
-    
-}
