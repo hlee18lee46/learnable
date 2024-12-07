@@ -1,10 +1,12 @@
 import SwiftUI
 import Supabase
+
 struct AnswerData: Codable {
     let user_email: String
     let question_id: Int
     let is_correct: Bool
 }
+
 struct QuizView: View {
     @State private var currentQuestionIndex = 0
     @State private var score = 0
@@ -13,7 +15,7 @@ struct QuizView: View {
     @State private var questions: [QuizQuestion] = []
     @State private var selectedCategory: String = "math"
     @State private var isLoading = true
-    @AppStorage("userCoins") private var userCoins: Int = 0
+    @State private var userCoins: Int = 0 // Replace AppStorage with a local state
     let userEmail: String // Pass this from login or context
 
     var body: some View {
@@ -34,14 +36,15 @@ struct QuizView: View {
                     .font(.title)
                     .padding()
             } else {
-                ScrollView{
+                ScrollView {
                     VStack {
-                        HStack{
+                        HStack {
                             Image(systemName: "bitcoinsign.circle.fill") // Replace with your coin image if you have one
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 20, height: 20)
                                 .foregroundColor(.yellow) // Change the color if using a system image
+                            
                             Text("Coins: \(userCoins)")
                                 .font(.headline)
                                 .padding()
@@ -85,19 +88,69 @@ struct QuizView: View {
                         }
                     }
                 }
-
-
                 Spacer()
             }
         }
         .padding()
         .onAppear(perform: {
+
+            fetchUserCoins()
             loadQuestions(for: selectedCategory)
         })
     }
 
-    // MARK: - Helper Functions
+    // MARK: - Fetch User Coins
+    private func fetchUserCoins() {
+        Task {
+            do {
+                let supabase = SupabaseManager.shared.supabaseClient
+                let response = try await supabase
+                    .from("users")
+                    .select("coin")
+                    .eq("email", value: userEmail)
+                    .single()
+                    .execute()
 
+                if let user = try? JSONDecoder().decode(UserDetails.self, from: response.data) {
+                    DispatchQueue.main.async {
+                        self.userCoins = user.coin // Update `userCoins` with fetched value
+                        print("Fetched coins from Supabase: \(user.coin)")
+                    }
+                } else {
+                    print("No user found with email: \(userEmail)")
+                }
+            } catch {
+                print("Error fetching user coins: \(error.localizedDescription)")
+            }
+        }
+    }
+
+
+
+    // MARK: - Update User Coins
+    private func updateUserCoins(newCoins: Int) {
+        Task {
+            do {
+                let supabase = SupabaseManager.shared.supabaseClient
+                let updates: [String: AnyEncodable] = [
+                    "coin": AnyEncodable(newCoins)
+                ]
+
+                try await supabase
+                    .from("users")
+                    .update(updates)
+                    .eq("email", value: userEmail)
+                    .execute()
+                
+                print("Successfully updated user coins to \(newCoins)")
+            } catch {
+                print("Error updating user coins: \(error.localizedDescription)")
+            }
+        }
+    }
+
+
+    // MARK: - Helper Functions
     func loadQuestions(for category: String) {
         let supabase = SupabaseManager.shared.supabaseClient
         isLoading = true
@@ -146,6 +199,7 @@ struct QuizView: View {
             feedbackMessage = "Correct!"
             score += 1
             userCoins += 10 // Reward 10 coins for a correct answer
+            updateUserCoins(newCoins: userCoins) // Update coins in Supabase
         }
 
         storeAnswer(isCorrect: isCorrect)
@@ -184,7 +238,6 @@ struct QuizView: View {
 }
 
 // MARK: - QuizQuestion Model
-
 struct QuizQuestion: Codable, Identifiable {
     let id: Int
     let category: String
@@ -205,4 +258,11 @@ struct QuizQuestion: Codable, Identifiable {
         case option3
         case option4
     }
+}
+
+// MARK: - UserDetails Model
+struct UserDetails: Codable {
+    let coin: Int
+    let character_id: Int
+    
 }

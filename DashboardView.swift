@@ -72,8 +72,3 @@ struct DashboardView: View {
     }
 }
 
-// UserDetails struct for decoding Supabase response
-struct UserDetails: Codable {
-    let coin: Int
-    let character_id: Int
-}
