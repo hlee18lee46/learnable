@@ -106,14 +106,16 @@ struct QuizView: View {
                 let supabase = SupabaseManager.shared.supabaseClient
                 let response = try await supabase
                     .from("users")
-                    .select("coin")
+                    .select("coin, character_id")  // Match UserDetails struct fields
                     .eq("email", value: userEmail)
                     .single()
                     .execute()
-
+                
+                print("Coins response data: \(String(data: response.data, encoding: .utf8) ?? "nil")")
+                
                 if let user = try? JSONDecoder().decode(UserDetails.self, from: response.data) {
                     DispatchQueue.main.async {
-                        self.userCoins = user.coin // Update `userCoins` with fetched value
+                        self.userCoins = user.coin
                         print("Fetched coins from Supabase: \(user.coin)")
                     }
                 } else {
