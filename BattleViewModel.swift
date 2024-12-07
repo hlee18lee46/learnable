@@ -112,14 +112,34 @@ class BattleViewModel: ObservableObject {
         sessionEnded = true
         self.winner = winner
 
-        // Update coins locally
-        let coinChange = winner ? 50 : -20
-        userCoins = max(userCoins + coinChange, 0)
-
         Task {
             do {
-                try await updateCoinsInSupabase(coinChange: coinChange)
-                print("Coins updated successfully in Supabase.")
+                // Fetch current coins first
+                let response = try await supabase
+                    .from("users")
+                    .select("coin, character_id")
+                    .eq("email", value: userEmail)
+                    .single()
+                    .execute()
+                
+                if let user = try? JSONDecoder().decode(UserDetails.self, from: response.data) {
+                    let currentCoins = user.coin
+                    let coinChange = winner ? 50 : -20
+                    let newCoins = max(currentCoins + coinChange, 0)
+                    
+                    // Update coins in database
+                    let updates: [String: AnyEncodable] = [
+                        "coin": AnyEncodable(newCoins)
+                    ]
+                    
+                    try await supabase
+                        .from("users")
+                        .update(updates)
+                        .eq("email", value: userEmail)
+                        .execute()
+                    
+                    print("Coins updated successfully in Supabase")
+                }
             } catch {
                 print("Error updating coins in Supabase: \(error.localizedDescription)")
             }
