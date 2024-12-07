@@ -125,7 +125,8 @@ struct MarketView: View {
         }
     }
 }
-struct UserCharacter: Encodable {
+
+struct UserCharacter: Codable {
     let user_email: String
     let character_id: Int
 }

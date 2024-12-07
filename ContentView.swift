@@ -96,11 +96,13 @@ struct ContentView: View {
 
             if let user = signInResult?.user {
                 isSignedIn = true
-                let userEmail = user.profile?.email ?? "Unknown email"
+                self.userEmail = user.profile?.email ?? "Unknown email" // Update the @State property directly
+                
+                print("Signed in with email: \(self.userEmail)") // Debugging log
                 
                 Task {
                     do {
-                        try await SupabaseService.shared.createUserData(email: userEmail)
+                        try await SupabaseService.shared.createUserData(email: self.userEmail)
                     } catch {
                         print("Error inserting user: \(error.localizedDescription)")
                     }
@@ -108,4 +110,5 @@ struct ContentView: View {
             }
         }
     }
+
 }
