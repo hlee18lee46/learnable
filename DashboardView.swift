@@ -33,7 +33,7 @@ struct DashboardView: View {
                     .frame(width: 150, height: 150)
                     .padding()
             } else {
-                Image(uiImage: UIImage(named: "basic.png")!) // Fallback to default
+                Image(uiImage: UIImage(named: "logo.png")!) // Fallback to default
                     .resizable()
                     .scaledToFit()
                     .frame(width: 150, height: 150)
@@ -51,24 +51,53 @@ struct DashboardView: View {
         Task {
             do {
                 let supabase = SupabaseManager.shared.supabaseClient
+                // Use a join query to fetch character details
                 let response = try await supabase
                     .from("users")
-                    .select("coin, character_id")
+                    .select("""
+                        coin,
+                        character_id,
+                        characters(image)
+                    """)
                     .eq("email", value: userEmail)
                     .single() // Expecting a single result
                     .execute()
 
+                // Print the raw JSON for debugging
+                if let rawJSON = String(data: response.data, encoding: .utf8) {
+                    print("Raw JSON: \(rawJSON)")
+                }
+
                 // Decode the response
-                let user = try JSONDecoder().decode(UserDetails.self, from: response.data)
+                let userWithCharacter = try JSONDecoder().decode(UserWithCharacterDetails.self, from: response.data)
 
                 DispatchQueue.main.async {
-                    self.userCoins = user.coin
-                    self.userCharacterImage = "character_\(user.character_id).png"
+                    self.userCoins = userWithCharacter.coin
+                    self.userCharacterImage = userWithCharacter.character.image
+                    print("User coins updated to \(self.userCoins)")
+                    print("User character image updated to \(self.userCharacterImage)")
                 }
             } catch {
                 print("Error fetching user details: \(error.localizedDescription)")
             }
         }
     }
+
+
+
+    struct UserWithCharacterDetails: Codable {
+        let coin: Int
+        let character: CharacterDetails
+
+        enum CodingKeys: String, CodingKey {
+            case coin
+            case character = "characters" // Map "characters" in the JSON to "character" in Swift
+        }
+
+        struct CharacterDetails: Codable {
+            let image: String
+        }
+    }
+
 }
 
