@@ -21,7 +21,7 @@ struct HomeView: View {
                 }
                 .tag(Tab.quiz)
 
-            CollabView()
+            CollaborateView(userEmail: userEmail)
                 .tabItem {
                     Image(systemName: "person.3.fill")
                     Text("Collab")
@@ -52,15 +52,6 @@ enum Tab {
     case dashboard, quiz, collab, battle, market
 }
 
-struct CollabView: View {
-    var body: some View {
-        VStack {
-            Text("Collaborate with Friends!")
-                .font(.largeTitle)
-                .padding()
-        }
-    }
-}
 
 
 // Preview

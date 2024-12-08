@@ -166,7 +166,7 @@ struct MarketView: View {
                 
             } catch {
                 DispatchQueue.main.async {
-                    self.purchaseMessage = "Purchase failed"
+                    self.purchaseMessage = ""
                     print("Purchase error: \(error)")
                 }
             }
