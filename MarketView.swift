@@ -175,7 +175,6 @@ struct MarketView: View {
 
 }
 
-// MARK: - Supporting Types
 struct MarketItem: Identifiable, Codable {
     let id: Int
     let name: String
@@ -188,7 +187,6 @@ struct UserCharacter: Codable {
     let character_id: Int
 }
 
-// MARK: - Market Item View
 struct MarketItemView: View {
     let item: MarketItem
     let userCoins: Int

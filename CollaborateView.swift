@@ -10,7 +10,8 @@ struct CollaborateView: View {
     @StateObject private var viewModel: CollaborateViewModel
     @State private var messageText: String = ""
     @State private var selectedCategory: String = "math"
-    
+    @State private var feedbackMessage = ""
+
     init(userEmail: String) {
         _viewModel = StateObject(wrappedValue: CollaborateViewModel(userEmail: userEmail))
     }
@@ -122,19 +123,10 @@ struct CollaborateView: View {
                 }
                 .padding()
                 
-                Divider()
-                
-                // Chat Section
-                VStack {
-                    ScrollView {
-                        LazyVStack(alignment: .leading) {
-                            ForEach(viewModel.messages) { message in
-                                ChatBubble(message: message)
-                            }
-                        }
-                    }
+                Text(feedbackMessage)
+                    .foregroundColor(.black)
                     .padding()
-                }
+
             }
         }
     }

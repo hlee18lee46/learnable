@@ -99,7 +99,6 @@ struct QuizView: View {
         })
     }
 
-    // MARK: - Fetch User Coins
     private func fetchUserCoins() {
         Task {
             do {
@@ -129,7 +128,6 @@ struct QuizView: View {
 
 
 
-    // MARK: - Update User Coins
     private func updateUserCoins(newCoins: Int) {
         Task {
             do {
@@ -152,7 +150,6 @@ struct QuizView: View {
     }
 
 
-    // MARK: - Helper Functions
     func loadQuestions(for category: String) {
         let supabase = SupabaseManager.shared.supabaseClient
         isLoading = true
@@ -239,7 +236,6 @@ struct QuizView: View {
     }
 }
 
-// MARK: - QuizQuestion Model
 struct QuizQuestion: Codable, Identifiable {
     let id: Int
     let category: String

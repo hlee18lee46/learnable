@@ -229,6 +229,7 @@ class CollaborateViewModel: ObservableObject {
                         // Handle partner's submission result
                         if isCorrect {
                             self.updateCoinsForBothUsers()
+                            
                         }
                     }
                     

@@ -54,7 +54,6 @@ class MultipeerManager: NSObject, ObservableObject, MCSessionDelegate, MCNearbyS
         }
     }
 
-    // MARK: - MCSessionDelegate
     func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
         DispatchQueue.main.async {
             self.connectedPeers = session.connectedPeers
@@ -71,12 +70,10 @@ class MultipeerManager: NSObject, ObservableObject, MCSessionDelegate, MCNearbyS
     func session(_: MCSession, didStartReceivingResourceWithName _: String, fromPeer _: MCPeerID, with _: Progress) {}
     func session(_: MCSession, didFinishReceivingResourceWithName _: String, fromPeer _: MCPeerID, at _: URL?, withError _: Error?) {}
 
-    // MARK: - MCNearbyServiceAdvertiserDelegate
     func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
         invitationHandler(true, session) // Automatically accept invitations
     }
 
-    // MARK: - MCNearbyServiceBrowserDelegate
     func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String: String]?) {
         browser.invitePeer(peerID, to: session, withContext: nil, timeout: 10)
     }
